@@ -1,0 +1,6 @@
+.gradle/
+.idea/
+http_test/
+build/
+*.iml
+*.txt
