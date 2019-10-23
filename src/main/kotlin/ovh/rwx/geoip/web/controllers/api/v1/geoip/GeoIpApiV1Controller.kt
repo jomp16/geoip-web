@@ -19,7 +19,9 @@ class GeoIpApiV1Controller(
         private val geoIpService: GeoIpService
 ) {
     @PostMapping("/search")
-    fun search(@RequestBody geoIpSearchRequestV1Api: Set<String>, @RequestHeader(value = "RESOLVE-PTR", required = false, defaultValue = "false") resolvePtr: Boolean): Flow<GeoIpSearchResponseV1Api> {
+    fun search(@RequestBody geoIpSearchRequestV1Api: Set<String>): Flow<GeoIpSearchResponseV1Api> {
+        val resolvePtr = geoIpSearchRequestV1Api.size <= 10
+
         return geoIpSearchRequestV1Api.asFlow().map {
             val inetAddress = InetAddress.getByName(it)
 
