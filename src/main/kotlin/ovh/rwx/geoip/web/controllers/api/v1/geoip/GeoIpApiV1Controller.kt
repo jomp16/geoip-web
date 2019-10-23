@@ -1,14 +1,14 @@
 package ovh.rwx.geoip.web.controllers.api.v1.geoip
 
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.map
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
-import ovh.rwx.geoip.web.objects.api.v1.geoip.*
+import org.springframework.web.bind.annotation.*
+import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchASNV1
+import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchCityV1
+import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchIpV1
+import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchResponseV1Api
 import ovh.rwx.geoip.web.services.GeoIpService
 import java.net.InetAddress
 
@@ -19,20 +19,18 @@ class GeoIpApiV1Controller(
         private val geoIpService: GeoIpService
 ) {
     @PostMapping("/search")
-    suspend fun search(@RequestBody geoIpSearchRequestV1Api: Set<String>): List<GeoIpSearchResponseV1Api> {
-        val returnSearch = geoIpSearchRequestV1Api.map {
-            GlobalScope.async {
-                val inetAddress = InetAddress.getByName(it)
-                val searchIp = geoIpService.searchIp(inetAddress)
+    fun search(@RequestBody geoIpSearchRequestV1Api: Set<String>, @RequestHeader("RESOLVE_PTR") resolvePtr: Boolean): Flow<GeoIpSearchResponseV1Api> {
+        return geoIpSearchRequestV1Api.asFlow().map {
+            val inetAddress = InetAddress.getByName(it)
 
-                GeoIpSearchResponseV1Api(
-                        GeoIpSearchIpV1(inetAddress.hostAddress, inetAddress.canonicalHostName),
-                        GeoIpSearchCityV1(searchIp.cityResponse.city.names["en"] ?: "No city", searchIp.cityResponse.mostSpecificSubdivision.names["en"] ?: "No state", searchIp.cityResponse.country.names["en"] ?: "No country"),
-                        GeoIpSearchASNV1("AS${searchIp.asnResponse.autonomousSystemNumber}", searchIp.asnResponse.autonomousSystemOrganization)
-                )
-            }
-        }.awaitAll()
+            val searchIp = geoIpService.searchIp(inetAddress)
 
-        return returnSearch
+            GeoIpSearchResponseV1Api(
+                    GeoIpSearchIpV1(inetAddress.hostAddress, if (resolvePtr) inetAddress.canonicalHostName else null),
+                    GeoIpSearchCityV1(searchIp.cityResponse.city.names["en"]
+                            ?: "No city", searchIp.cityResponse.mostSpecificSubdivision.names["en"]
+                            ?: "No state", searchIp.cityResponse.country.names["en"] ?: "No country"),
+                    GeoIpSearchASNV1("AS${searchIp.asnResponse.autonomousSystemNumber}", searchIp.asnResponse.autonomousSystemOrganization))
+        }
     }
 }

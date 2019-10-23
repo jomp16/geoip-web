@@ -15,7 +15,7 @@ data class GeoIpSearchIpV1(
         @JsonProperty("ip")
         val ip: String,
         @JsonProperty("ptr")
-        val ptr: String
+        val ptr: String?
 )
 
 data class GeoIpSearchCityV1(
