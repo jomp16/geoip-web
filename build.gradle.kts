@@ -37,6 +37,7 @@ dependencies {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
     compile("com.maxmind.geoip2:geoip2:2.12.0")
+    compile("dnsjava:dnsjava:2.1.9")
 }
 
 tasks.withType<Test> {
