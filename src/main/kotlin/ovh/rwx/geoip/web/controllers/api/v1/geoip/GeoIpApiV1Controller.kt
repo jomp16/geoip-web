@@ -5,10 +5,7 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.xbill.DNS.Address
 import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchASNV1
 import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchCityV1
@@ -20,6 +17,7 @@ import java.net.UnknownHostException
 
 @RestController
 @RequestMapping("/api/v1/geoip")
+@CrossOrigin
 class GeoIpApiV1Controller(
         @Autowired
         private val geoIpService: GeoIpService
@@ -33,7 +31,7 @@ class GeoIpApiV1Controller(
         return geoIpSearchRequestV1Api.asFlow().map { resolveIp(it, resolvePtr) }
     }
 
-    private suspend fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api {
+    private fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api {
         val inetAddress = InetAddress.getByName(ip)
 
         val searchIp = geoIpService.searchIp(inetAddress)
@@ -42,7 +40,7 @@ class GeoIpApiV1Controller(
 
         if (resolvePtr) {
             try {
-                ptr = Address.getHostName(inetAddress)
+                ptr = Address.getHostName(inetAddress)?.substringBeforeLast('.')
             } catch (e: UnknownHostException) {
                 logger.error("Error looking up the PTR of IP $ip", e)
             }
