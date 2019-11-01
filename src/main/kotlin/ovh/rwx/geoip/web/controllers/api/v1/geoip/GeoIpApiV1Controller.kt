@@ -2,7 +2,7 @@ package ovh.rwx.geoip.web.controllers.api.v1.geoip
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
@@ -28,11 +28,23 @@ class GeoIpApiV1Controller(
     fun search(@RequestBody geoIpSearchRequestV1Api: Set<String>): Flow<GeoIpSearchResponseV1Api> {
         val resolvePtr = geoIpSearchRequestV1Api.size <= 10
 
-        return geoIpSearchRequestV1Api.asFlow().map { resolveIp(it, resolvePtr) }
+        return geoIpSearchRequestV1Api.filterNot { it.isBlank() }.asFlow().mapNotNull { resolveIp(it, resolvePtr) }
     }
 
-    private fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api {
-        val inetAddress = InetAddress.getByName(ip)
+    private fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api? {
+        val inetAddress = try {
+            InetAddress.getByName(ip)
+        } catch (e: UnknownHostException) {
+            logger.error("Could't get address from {}", ip)
+
+            return null
+        }
+
+        if (inetAddress.isSiteLocalAddress || inetAddress.isLoopbackAddress) {
+            logger.error("Private IP found, skipping {}", inetAddress.hostAddress)
+
+            return null
+        }
 
         val searchIp = geoIpService.searchIp(inetAddress)
 
@@ -48,11 +60,11 @@ class GeoIpApiV1Controller(
 
         return GeoIpSearchResponseV1Api(
                 GeoIpSearchIpV1(inetAddress.hostAddress, ptr),
-                GeoIpSearchCityV1(
+                if (searchIp.cityResponse == null) null else GeoIpSearchCityV1(
                         searchIp.cityResponse.city.names["en"] ?: "No city",
                         searchIp.cityResponse.mostSpecificSubdivision.names["en"] ?: "No state",
                         searchIp.cityResponse.country.names["en"] ?: "No country"
                 ),
-                GeoIpSearchASNV1("AS${searchIp.asnResponse.autonomousSystemNumber}", searchIp.asnResponse.autonomousSystemOrganization))
+                if (searchIp.asnResponse == null) null else GeoIpSearchASNV1("AS${searchIp.asnResponse.autonomousSystemNumber}", searchIp.asnResponse.autonomousSystemOrganization))
     }
 }

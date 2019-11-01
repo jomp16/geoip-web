@@ -2,5 +2,6 @@
 .idea/
 http_test/
 build/
+out/
 *.iml
 *.txt
