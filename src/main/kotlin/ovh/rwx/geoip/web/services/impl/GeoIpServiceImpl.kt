@@ -6,14 +6,17 @@ import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Service
 import ovh.rwx.geoip.web.objects.GeoIp
 import ovh.rwx.geoip.web.services.GeoIpService
+import ovh.rwx.geoip.web.tasks.GeoIpDatabase
 import java.net.InetAddress
 
 @Service
-internal class GeoIpServiceImpl : GeoIpService {
+internal class GeoIpServiceImpl(
+        private val geoIpDatabase: GeoIpDatabase
+) : GeoIpService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private val databaseReaderCity: DatabaseReader by lazy { DatabaseReader.Builder(ClassPathResource("geoip/GeoLite2-City.mmdb").file).build() }
-    private val databaseReaderASN: DatabaseReader by lazy { DatabaseReader.Builder(ClassPathResource("geoip/GeoLite2-ASN.mmdb").file).build() }
+    private val databaseReaderCity: DatabaseReader by lazy { DatabaseReader.Builder(geoIpDatabase.GEOIP_CITY_DB_FILE).build() }
+    private val databaseReaderASN: DatabaseReader by lazy { DatabaseReader.Builder(geoIpDatabase.GEOIP_ASN_DB_FILE).build() }
 
     override fun searchIp(inetAddress: InetAddress): GeoIp {
         val city = try {

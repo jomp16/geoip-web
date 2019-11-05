@@ -38,6 +38,7 @@ dependencies {
     }
     compile("com.maxmind.geoip2:geoip2:2.12.0")
     compile("dnsjava:dnsjava:2.1.9")
+    compile("org.codehaus.plexus:plexus-archiver:4.2.1")
 }
 
 tasks.withType<Test> {
