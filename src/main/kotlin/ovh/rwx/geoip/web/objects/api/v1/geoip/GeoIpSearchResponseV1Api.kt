@@ -27,12 +27,14 @@ data class GeoIpSearchCityV1(
         @JsonProperty("state")
         val state: String,
         @JsonProperty("country")
-        val country: String
+        val country: String,
+        @JsonProperty("countryIsoCode")
+        val countryIsoCode: String
 )
 
 data class GeoIpSearchASNV1(
         @JsonProperty("number")
         val number: String,
         @JsonProperty("name")
-        val name: String
+        val name: String?
 )

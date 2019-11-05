@@ -63,7 +63,8 @@ class GeoIpApiV1Controller(
                 if (searchIp.cityResponse == null) null else GeoIpSearchCityV1(
                         searchIp.cityResponse.city.names["en"] ?: "No city",
                         searchIp.cityResponse.mostSpecificSubdivision.names["en"] ?: "No state",
-                        searchIp.cityResponse.country.names["en"] ?: "No country"
+                        searchIp.cityResponse.country.names["en"] ?: "No country",
+                        searchIp.cityResponse.country.isoCode ?: "ZZ"
                 ),
                 if (searchIp.asnResponse == null) null else GeoIpSearchASNV1("AS${searchIp.asnResponse.autonomousSystemNumber}", searchIp.asnResponse.autonomousSystemOrganization))
     }
