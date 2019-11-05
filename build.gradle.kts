@@ -38,7 +38,9 @@ dependencies {
     }
     compile("com.maxmind.geoip2:geoip2:2.12.0")
     compile("dnsjava:dnsjava:2.1.9")
-    compile("org.codehaus.plexus:plexus-archiver:4.2.1")
+    compile("net.java.truevfs:truevfs-access:0.12.2")
+    compile("net.java.truevfs:truevfs-kernel-impl_2.13:0.12.2")
+    compile("net.java.truevfs:truevfs-driver-tar-gzip:0.12.2")
 }
 
 tasks.withType<Test> {
