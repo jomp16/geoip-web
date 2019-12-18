@@ -15,10 +15,10 @@ internal class GeoIpServiceImpl(
 ) : GeoIpService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private val databaseReaderCity: DatabaseReader by lazy { DatabaseReader.Builder(geoIpDatabase.GEOIP_CITY_DB_FILE).build() }
-    private val databaseReaderASN: DatabaseReader by lazy { DatabaseReader.Builder(geoIpDatabase.GEOIP_ASN_DB_FILE).build() }
-
     override fun searchIp(inetAddress: InetAddress): GeoIp {
+        val databaseReaderCity: DatabaseReader = DatabaseReader.Builder(geoIpDatabase.GEOIP_CITY_DB_FILE).build()
+        val databaseReaderASN: DatabaseReader = DatabaseReader.Builder(geoIpDatabase.GEOIP_ASN_DB_FILE).build()
+
         val city = try {
             databaseReaderCity.city(inetAddress)
         } catch (e: Exception) {
