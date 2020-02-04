@@ -9,9 +9,9 @@ steps:
   - name: build-test
     image: gradle:latest
     commands:
-      - gradle assemble check --stacktrace
+      - gradle assemble unpack check --stacktrace
 
-  - name: upload_docker
+  - name: upload-docker
     image: plugins/docker
     settings:
       repo: repo.treescale.com/jomp16/geoip-web
