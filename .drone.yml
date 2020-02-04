@@ -1,0 +1,30 @@
+kind: pipeline
+type: docker
+name: default
+
+clone:
+  depth: 1
+
+steps:
+  - name: build-test
+    image: gradle:latest
+    commands:
+      - gradle assemble check --stacktrace
+
+  - name: upload_docker
+    image: plugins/docker
+    settings:
+      repo: repo.treescale.com/jomp16/geoip-web
+      registry: repo.treescale.com
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      event: tag
+
+trigger:
+  event:
+    - push
+    - tag
