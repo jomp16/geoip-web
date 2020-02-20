@@ -1,8 +1,6 @@
 package ovh.rwx.geoip.web.controllers.api.v1.geoip
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
@@ -25,12 +23,11 @@ class GeoIpApiV1Controller(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     @PostMapping("/search")
-    fun search(@RequestBody geoIpSearchRequestV1Api: Set<String>): Flow<GeoIpSearchResponseV1Api> {
-        val resolvePtr = geoIpSearchRequestV1Api.size <= 10
-
-        return geoIpSearchRequestV1Api.filterNot { it.isBlank() }.asFlow().mapNotNull { resolveIp(it, resolvePtr) }
+    suspend fun search(@RequestBody geoIpSearchRequestV1ApiFlow: Flow<Any>): Flow<GeoIpSearchResponseV1Api> {
+        return geoIpSearchRequestV1ApiFlow.filterNotNull().map { it.toString() }.filterNot { it.isBlank() }.mapNotNull { resolveIp(it, true) }
     }
 
+    @Suppress("SameParameterValue")
     private fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api? {
         val inetAddress = try {
             InetAddress.getByName(ip)
