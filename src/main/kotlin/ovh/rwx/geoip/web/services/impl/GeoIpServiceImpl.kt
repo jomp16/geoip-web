@@ -13,15 +13,15 @@ import java.net.InetAddress
 internal class GeoIpServiceImpl : GeoIpService {
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    private val databaseReaderCity: DatabaseReader by lazy { DatabaseReader.Builder(ClassPathResource("geoip/GeoLite2-City.mmdb").file).withCache(CHMCache()).build() }
-    private val databaseReaderASN: DatabaseReader by lazy { DatabaseReader.Builder(ClassPathResource("geoip/GeoLite2-ASN.mmdb").file).withCache(CHMCache()).build() }
+    private val databaseReaderCity: DatabaseReader by lazy { DatabaseReader.Builder(ClassPathResource("geoip/GeoLite2-City.mmdb").inputStream).withCache(CHMCache()).build() }
+    private val databaseReaderASN: DatabaseReader by lazy { DatabaseReader.Builder(ClassPathResource("geoip/GeoLite2-ASN.mmdb").inputStream).withCache(CHMCache()).build() }
 
     override fun searchIp(inetAddress: InetAddress): GeoIp {
         val city = try {
             databaseReaderCity.city(inetAddress)
         } catch (e: Exception) {
             logger.error("An error happened while searching for city for IP ${inetAddress.hostAddress}", e)
-            
+
             null
         }
         val asn = try {
