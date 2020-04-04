@@ -1,5 +1,6 @@
 package ovh.rwx.geoip.web.controllers.api.v1.geoip
 
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -12,6 +13,7 @@ import ovh.rwx.geoip.web.objects.api.v1.geoip.GeoIpSearchResponseV1Api
 import ovh.rwx.geoip.web.services.GeoIpService
 import java.net.InetAddress
 import java.net.UnknownHostException
+import java.util.concurrent.TimeUnit
 
 @RestController
 @RequestMapping("/api/v1/geoip")
@@ -28,14 +30,16 @@ class GeoIpApiV1Controller(
     }
 
     @Suppress("SameParameterValue")
-    private fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api? {
-        val inetAddress = try {
-            InetAddress.getByName(ip)
-        } catch (e: UnknownHostException) {
-            logger.error("Could't get address from {}", ip)
+    private suspend fun resolveIp(ip: String, resolvePtr: Boolean): GeoIpSearchResponseV1Api? {
+        val inetAddress = withContext(Dispatchers.IO) {
+            try {
+                InetAddress.getByName(ip)
+            } catch (e: UnknownHostException) {
+                logger.error("Could't get address from {}", ip)
 
-            return null
-        }
+                null
+            }
+        } ?: return null
 
         if (inetAddress.isSiteLocalAddress || inetAddress.isLoopbackAddress) {
             logger.error("Private IP found, skipping {}", inetAddress.hostAddress)
@@ -49,9 +53,19 @@ class GeoIpApiV1Controller(
 
         if (resolvePtr) {
             try {
-                ptr = Address.getHostName(inetAddress)?.substringBeforeLast('.')
-            } catch (e: UnknownHostException) {
-                logger.error("Error looking up the PTR of IP $ip", e)
+                ptr = withTimeout(TimeUnit.SECONDS.toMillis(5)) {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            Address.getHostName(inetAddress)?.substringBeforeLast('.')
+                        } catch (e: UnknownHostException) {
+                            logger.error("Error looking up the PTR of IP $ip", e)
+
+                            null
+                        }
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                logger.error("Timeout resolving PTR of IP $ip", e)
             }
         }
 

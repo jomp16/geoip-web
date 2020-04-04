@@ -2,10 +2,11 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
-    id("org.springframework.boot") version "2.2.4.RELEASE"
+    id("org.springframework.boot") version "2.2.6.RELEASE"
     id("io.spring.dependency-management") version "1.0.9.RELEASE"
-    kotlin("jvm") version "1.3.61"
-    kotlin("plugin.spring") version "1.3.61"
+    kotlin("jvm") version "1.3.71"
+    kotlin("plugin.spring") version "1.3.71"
+    id("com.github.ben-manes.versions") version "0.28.0"
 }
 
 group = "ovh.rwx.geoip"
@@ -20,6 +21,7 @@ configurations {
 }
 
 repositories {
+    jcenter()
     mavenCentral()
 }
 
@@ -35,8 +37,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
     }
-    compile("com.maxmind.geoip2:geoip2:2.12.0")
-    compile("dnsjava:dnsjava:2.1.9")
+    implementation("com.maxmind.geoip2:geoip2:2.13.1")
+    implementation("dnsjava:dnsjava:3.0.2")
 }
 
 tasks.withType<Test> {
@@ -55,4 +57,18 @@ task<Copy>("unpack") {
     dependsOn(bootJar)
     from(zipTree(bootJar.outputs.files.singleFile))
     into("build/dependency")
+}
+
+fun isNonStable(version: String): Boolean {
+    val stableKeyword = listOf("RELEASE", "FINAL", "GA").any { version.toUpperCase().contains(it) }
+    val regex = "^[0-9,.v-]+(-r)?$".toRegex()
+    val isStable = stableKeyword || regex.matches(version)
+    return isStable.not()
+}
+
+tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask> {
+    // Example 1: reject all non stable versions
+    rejectVersionIf {
+        isNonStable(candidate.version)
+    }
 }
